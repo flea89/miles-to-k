@@ -10,10 +10,15 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
 import { css } from 'lit-element';
 
+export const colors = {
+  white: css`#E9E4E1`,
+};
+
 export const SharedStyles = css`
   :host {
     display: block;
     box-sizing: border-box;
+    background-color: ${colors.white};
   }
 
   section {

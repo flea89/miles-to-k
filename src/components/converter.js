@@ -10,6 +10,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
 import { LitElement, html, css } from 'lit-element';
 import { connect } from 'pwa-helpers/connect-mixin.js';
+import { colors } from './shared-styles';
 
 // This element is connected to the Redux store.
 import { store } from '../store.js';
@@ -24,11 +25,15 @@ class Converter extends connect(store)(LitElement) {
     super();
     this.minutes_ = 0;
     this.seconds_ = 0;
+
+    // expressed in km/h
+    this.pace = 0;
   }
 
   static get properties() {
     return {
       converted_pace_: { type: String },
+      pace: {type: String}
     };
   }
 
@@ -36,10 +41,92 @@ class Converter extends connect(store)(LitElement) {
     return [
       css`
         :host {
-          display: block;
+          display: flex;
+          flex-direction: column;
+          color: ${colors.white};
         }
+
+        h2 {
+          color: #12355B;
+          text-align: center;
+
+        }
+
+        form {
+          flex: 1;
+          display:flex;
+          flex-direction: column;
+        }
+
+        input[type="text"] {
+          -webkit-appearance: none;
+          border: 0;
+          background: none;
+          border-bottom: 1px solid white;
+          color: white;
+          font-size: 40px;
+          width: 2em;
+          text-align: center;
+        }
+
+        input[type="text"].kmh {
+          width: 4em;
+        }
+
+        label {
+          display: flex;
+          flex-direction: column;
+          margin: 0 10px;
+          text-align: center;
+          position: relative;
+        }
+
+        .pace-header {
+
+        }
+
+        .pace-header__pace {
+          display: inline-block;
+          font-size: 12px;
+        }
+
+        .pace-header__units {
+          display: inline-block;
+          font-size: 30px;
+        }
+
         .pace-container {
-          display: block;
+          flex: 1;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          padding: 20px 30px;
+
+        }
+
+        .pace-value {
+          flex: 1;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+
+        .pace-value label + label:before {
+          content: ":";
+          position: absolute;
+          font-size: 35px;
+          bottom: 0;
+          left: -15px;
+        }
+
+        .pace-container:nth-child(1) {
+          background-color: #0065A4;
+        }
+        .pace-container:nth-child(2) {
+          background-color: #C6373C;
+        }
+        .pace-container:nth-child(3) {
+          background-color: #12355B;
         }
       `
     ];
@@ -47,79 +134,151 @@ class Converter extends connect(store)(LitElement) {
 
   render() {
     return html`
-      <h2>Start converting</h2>
-
+      <h2>Pace converter</h2>
       <form action="">
         <div class="pace-container">
-          Pace minutes/miles:
-          <label>
-            Minutes
-            <input
-              type="text"
-              type="number"
-              .value=${this.minutes_}
-              @input=${e => this._convert_pace({minutes: e.target.value})}/>
-          </label>
-          <label>
-            seconds
-            <input
-              type="text"
-              type="number"
-              .value=${this.seconds_}
-              @input=${e => this._convert_pace({seconds: e.target.value})}/>
-          </label>
+          <div class="pace-header">
+            <div class="pace-header__pace">
+              pace
+            </div>
+            <div class="pace-header__units">
+              minutes/miles
+            </div>
+          </div>
+          <div class="pace-value">
+            <label>
+              Minutes
+              <input
+                type="text"
+                type="number"
+                .value=${this._pace_to_m_minutes(this.pace)}
+                @input=${e => this._set_pace_from_miles({minutes: e.target.value})}/>
+            </label>
+            <label>
+              seconds
+              <input
+                type="text"
+                type="number"
+                min="0"
+                max:"60"
+                .value="${this._pace_to_m_seconds(this.pace)}"
+                @input=${e => this._set_pace_from_miles({seconds: e.target.value})}/>
+            </label>
+          </div>
         </div>
         <div class="pace-container">
-          Pace minutes/k:
-          <label>
-            Minutes
-            <input
-              type="text"
-              type="number"
-              .value=${this.minutes_}
-              @input=${e => this._convert_pace({minutes: e.target.value})}/>
-          </label>
-          <label>
-            seconds
-            <input
-              type="text"
-              type="number"
-              .value=${this.seconds_}
-              @input=${e => this._convert_pace({seconds: e.target.value})}/>
-          </label>
+          <div class="pace-header">
+            <div class="pace-header__pace">
+              pace
+            </div>
+            <div class="pace-header__units">
+              minutes/km
+            </div>
+          </div>
+          <div class="pace-value">
+            <label>
+              Minutes
+              <input
+                type="text"
+                type="number"
+                .value="${this._pace_to_km_minutes(this.pace)}"
+                @input=${e => this._set_pace_from_k({minutes: e.target.value})}/>
+            </label>
+            <label>
+              seconds
+              <input
+                type="text"
+                type="number"
+                min="0"
+                max:"60"
+                .value=${this._pace_to_km_seconds(this.pace)}
+                @input=${e => this._set_pace_from_k({seconds: e.target.value})}/>
+            </label>
+          </div>
         </div>
         <div class="pace-container">
-          Pace Km/h:
-          <label>
-            km/h
-            <input
-              type="text"
-              type="number"
-              .value=${this.minutes_}
-              @input=${e => this._convert_pace({minutes: e.target.value})}/>
-          </label>
+          <div class="pace-header">
+            <div class="pace-header__pace">
+              pace
+            </div>
+            <div class="pace-header__units">
+              km/h
+            </div>
+          </div>
+          <div class="pace-value">
+            <label>
+              <input
+                type="text"
+                type="number"
+                class="kmh"
+                .value=${this.pace}
+                @input=${e => this._set_pace_from_kmh(e.target.value)}/>
+            </label>
+          </div>
         </div>
 
       </form>
-
-
-
-
-      Result:
-      <p>${this.converted_pace_}</p>
-
     `;
   }
 
-  _convert_pace({minutes, seconds}) {
+
+  _set_pace_from_miles({minutes, seconds}) {
     this.minutes_ = minutes ? minutes: this.minutes_;
     this.seconds_ = seconds ? seconds: this.seconds_;
 
     const decimal_pace = parseInt(this.minutes_) + this.seconds_ / 60;
-    const converted_pace_ = decimal_pace / mile_in_k
-    const converted_seconds = Math.round((converted_pace_ % 1) * 60)
+    this.pace = 60 / decimal_pace * mile_in_k;
 
-    this.converted_pace_ = `${Math.floor(converted_pace_)}:${converted_seconds}` ;
+  }
+
+  _set_pace_from_k({minutes, seconds}) {
+    this.minutes_ = minutes ? minutes: this.minutes_;
+    this.seconds_ = seconds ? seconds: this.seconds_;
+
+    const decimal_pace = parseInt(this.minutes_) + this.seconds_ / 60;
+    this.pace = 60 / decimal_pace;
+  }
+
+
+  _set_pace_from_kmh(kmh) {
+    this.pace = kmh;
+  }
+
+
+  _pace_to_km_minutes(pace) {
+    return this._format_2_digits_int( Math.floor(60/pace));
+  }
+
+  _pace_to_km_seconds(pace) {
+    return this._format_2_digits_int((60 / pace) % 1 * 60);
+  }
+
+
+  _pace_to_m_minutes(pace) {
+    return this._format_2_digits_int( Math.floor(60/pace * mile_in_k));
+  }
+
+  _pace_to_m_seconds(pace) {
+    return this._format_2_digits_int((60 / pace * mile_in_k) % 1 * 60);
+  }
+
+  _format_2_digits_int(num) {
+    console.log(num)
+    if (!isFinite(num)) {
+      return '00';
+    }
+    return `0${Math.round(num)}`.slice(-2);
+  }
+
+  _convert_pace({minutes, seconds}) {
+  //   this.minutes_ = minutes ? minutes: this.minutes_;
+  //   this.seconds_ = seconds ? seconds: this.seconds_;
+
+  //   const decimal_pace = parseInt(this.minutes_) + this.seconds_ / 60;
+  //   const converted_pace_ = decimal_pace / mile_in_k
+  //   const converted_seconds = Math.round((converted_pace_ % 1) * 60)
+
+  //   this.converted_pace_ = `${Math.floor(converted_pace_)}:${converted_seconds}` ;
   }
 
 }

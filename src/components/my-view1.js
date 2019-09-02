@@ -8,7 +8,7 @@ Code distributed by Google as part of the polymer project is also
 subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
 */
 
-import { html } from 'lit-element';
+import { html, css } from 'lit-element';
 import { PageViewElement } from './page-view-element.js';
 
 // These are the shared styles needed by this element.
@@ -18,16 +18,18 @@ import './converter.js'
 class MyView1 extends PageViewElement {
   static get styles() {
     return [
-      SharedStyles
+      SharedStyles,
+      css`
+      converter-el {
+        min-height: 100vh;
+      }
+      `
     ];
   }
 
   render() {
     return html`
-      <section>
-        <h2>Static page</h2>
-        <converter-el></converter-el>
-      </section>
+      <converter-el></converter-el>
     `;
   }
 }
