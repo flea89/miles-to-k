@@ -27,13 +27,13 @@ class Converter extends connect(store)(LitElement) {
     this.seconds_ = 0;
 
     // expressed in km/h
-    this.pace = 0;
+    this.pace = 0.00;
   }
 
   static get properties() {
     return {
       converted_pace_: { type: String },
-      pace: {type: String}
+      pace: {type: Number}
     };
   }
 
@@ -58,7 +58,7 @@ class Converter extends connect(store)(LitElement) {
           flex-direction: column;
         }
 
-        input[type="text"] {
+        input[type="number"] {
           -webkit-appearance: none;
           border: 0;
           background: none;
@@ -69,8 +69,8 @@ class Converter extends connect(store)(LitElement) {
           text-align: center;
         }
 
-        input[type="text"].kmh {
-          width: 4em;
+        input[type="number"].kmh {
+          width: 3em;
         }
 
         label {
@@ -149,7 +149,6 @@ class Converter extends connect(store)(LitElement) {
             <label>
               Minutes
               <input
-                type="text"
                 type="number"
                 .value=${this._pace_to_m_minutes(this.pace)}
                 @input=${e => this._set_pace_from_miles({minutes: e.target.value})}/>
@@ -157,7 +156,6 @@ class Converter extends connect(store)(LitElement) {
             <label>
               seconds
               <input
-                type="text"
                 type="number"
                 min="0"
                 max:"60"
@@ -179,7 +177,6 @@ class Converter extends connect(store)(LitElement) {
             <label>
               Minutes
               <input
-                type="text"
                 type="number"
                 .value="${this._pace_to_km_minutes(this.pace)}"
                 @input=${e => this._set_pace_from_k({minutes: e.target.value})}/>
@@ -187,7 +184,6 @@ class Converter extends connect(store)(LitElement) {
             <label>
               seconds
               <input
-                type="text"
                 type="number"
                 min="0"
                 max:"60"
@@ -208,11 +204,10 @@ class Converter extends connect(store)(LitElement) {
           <div class="pace-value">
             <label>
               <input
-                type="text"
                 type="number"
                 class="kmh"
                 .value=${this.pace}
-                @input=${e => this._set_pace_from_kmh(e.target.value)}/>
+                @input=${e => this._set_pace_from_kmh(parseFloat(e.target.value))}/>
             </label>
           </div>
         </div>
@@ -223,25 +218,25 @@ class Converter extends connect(store)(LitElement) {
 
 
   _set_pace_from_miles({minutes, seconds}) {
-    this.minutes_ = minutes ? minutes: this.minutes_;
-    this.seconds_ = seconds ? seconds: this.seconds_;
+    const minutes_ = minutes ? minutes: this._pace_to_m_minutes(this.pace);
+    const seconds_ = seconds ? seconds: this._pace_to_m_seconds(this.pace);
 
-    const decimal_pace = parseInt(this.minutes_) + this.seconds_ / 60;
-    this.pace = 60 / decimal_pace * mile_in_k;
+    const decimal_pace = parseInt(minutes_) + seconds_ / 60;
+    this._set_pace_from_kmh(60 / decimal_pace * mile_in_k);
 
   }
 
   _set_pace_from_k({minutes, seconds}) {
-    this.minutes_ = minutes ? minutes: this.minutes_;
-    this.seconds_ = seconds ? seconds: this.seconds_;
+    const minutes_ = minutes ? minutes: this._pace_to_km_minutes(this.pace);
+    const seconds_ = seconds ? seconds: this._pace_to_km_seconds(this.pace);
 
-    const decimal_pace = parseInt(this.minutes_) + this.seconds_ / 60;
-    this.pace = 60 / decimal_pace;
+    const decimal_pace = parseInt(minutes_) + seconds_ / 60;
+    this._set_pace_from_kmh(60 / decimal_pace);
   }
 
 
   _set_pace_from_kmh(kmh) {
-    this.pace = kmh;
+    this.pace = Math.round(kmh* 100) / 100;
   }
 
 
